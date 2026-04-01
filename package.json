@@ -1,0 +1,75 @@
+{
+  "name": "aql-formatter",
+  "displayName": "AQL Formatter",
+  "description": "Formatter and syntax highlighting for ArangoDB Query Language (AQL)",
+  "version": "0.1.0",
+  "icon": "icon.png",
+  "publisher": "aql-tools",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aql-tools/aql-formatter"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Formatters",
+    "Programming Languages"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "AQL Formatter",
+      "properties": {
+        "aql-formatter.printWidth": {
+          "type": "integer",
+          "default": 80,
+          "description": "Maximum line width before breaking objects or arrays into multiple lines."
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "aql",
+        "aliases": [
+          "AQL",
+          "ArangoDB Query Language"
+        ],
+        "extensions": [
+          ".aql"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "aql",
+        "scopeName": "source.aql",
+        "path": "./syntaxes/aql.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "compile": "tsc -p ./",
+    "watch": "npm run esbuild-base -- --sourcemap --watch",
+    "test": "jest",
+    "lint": "eslint src/"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/jest": "^30.0.0",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
+    "esbuild": "^0.27.4",
+    "eslint": "^10.1.0",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.58.0"
+  }
+}
