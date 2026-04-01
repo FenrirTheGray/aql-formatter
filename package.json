@@ -1,6 +1,6 @@
 {
   "name": "aql-formatter",
-  "displayName": "AQL Formatter",
+  "displayName": "ArangoDB Query Language Formatter (AQL)",
   "description": "Formatter and syntax highlighting for ArangoDB Query Language (AQL)",
   "version": "0.1.0",
   "icon": "icon.png",
@@ -21,7 +21,7 @@
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
-      "title": "AQL Formatter",
+      "title": "ArangoDB Query Language Formatter (AQL)",
       "properties": {
         "aql-formatter.printWidth": {
           "type": "integer",
