@@ -4,11 +4,11 @@
   "description": "Formatter and syntax highlighting for ArangoDB Query Language (AQL)",
   "version": "0.1.0",
   "icon": "icon.png",
-  "publisher": "aql-tools",
+  "publisher": "acolovic",
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aql-tools/aql-formatter"
+    "url": "https://github.com/FenrirTheGray/aql-formatter"
   },
   "engines": {
     "vscode": "^1.80.0"
