@@ -16,9 +16,9 @@ describe('Keyword definitions', () => {
     const clausePattern: string = grammar.repository['clause-keywords'].patterns[0].match;
     // Pattern looks like: (?i)\b(FOR|FILTER|...)\b — extract the alternation group
     const match = clausePattern.match(/\(([A-Z_|]+)\)/);
-    expect(match).toBeTruthy();
+    if (!match) { throw new Error('Expected clause pattern to contain keyword alternation group'); }
 
-    const tmKeywords = new Set(match![1].split('|'));
+    const tmKeywords = new Set(match[1].split('|'));
 
     // Every tmLanguage clause keyword should be in our CLAUSE_KEYWORDS
     for (const kw of tmKeywords) {
@@ -40,7 +40,7 @@ describe('Keyword definitions', () => {
     // Collect all keywords from all grammar patterns
     const allGrammarKeywords = new Set<string>();
 
-    const extractKeywords = (patterns: any[]) => {
+    const extractKeywords = (patterns: { match?: string }[]) => {
       for (const p of patterns) {
         if (p.match) {
           // Match keyword groups like (FOR|FILTER|...) or (true|false) — case-insensitive

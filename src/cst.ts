@@ -30,7 +30,8 @@ export function buildCST(tokens: Token[]): Node[] {
       const matchType = token.type === TokenType.CloseParen ? 'Paren' : token.type === TokenType.CloseBracket ? 'Bracket' : 'Brace';
 
       if (stack.length > 0 && stack[stack.length - 1].groupType === matchType) {
-        const group = stack.pop()!;
+        const group = stack.pop();
+        if (!group) { break; }
         const groupNode: GroupNode = { type: 'Group', groupType: group.groupType, open: group.open, close: token, children: group.children };
         if (stack.length > 0) {
           stack[stack.length - 1].children.push(groupNode);
@@ -50,7 +51,8 @@ export function buildCST(tokens: Token[]): Node[] {
   }
 
   while (stack.length > 0) {
-    const group = stack.pop()!;
+    const group = stack.pop();
+    if (!group) { break; }
     const groupNode: GroupNode = { type: 'Group', groupType: group.groupType, open: group.open, close: null, children: group.children };
     if (stack.length > 0) {
       stack[stack.length - 1].children.push(groupNode);

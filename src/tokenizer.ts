@@ -79,7 +79,8 @@ export function tokenize(input: string): Token[] {
 
   while ((match = lexerRegex.exec(input)) !== null) {
     const value = match[0];
-    const groups = match.groups!;
+    const groups = match.groups;
+    if (!groups) { continue; }
     const offset = match.index;
     const currentLine = line;
     const currentColumn = column;
