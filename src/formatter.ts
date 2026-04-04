@@ -106,14 +106,28 @@ export function formatAql(text: string, options: FormatOptions): string {
         const upper = token.value.toUpperCase();
         
         if (token.type === TokenType.LineComment) {
+          if (token.value.trim() === '//') {
+            if (!isNewLine) newline();
+            indent = 0;
+            forDepth = 0;
+            firstClauseSeen = false;
+            write('//');
+            newline();
+            prevToken = token;
+            continue;
+          }
+          const ownLine = prevToken && token.line > prevToken.line;
+          if (ownLine && !isNewLine) newline();
           if (!isNewLine && !shouldSkipSpaceBefore(token, prevToken)) write(' ');
           write(token.value.trimEnd());
           newline();
           prevToken = token;
           continue;
         }
-        
+
         if (token.type === TokenType.BlockComment) {
+          const ownLine = prevToken && token.line > prevToken.line;
+          if (ownLine && !isNewLine) newline();
           if (!isNewLine && !shouldSkipSpaceBefore(token, prevToken)) write(' ');
           write(token.value);
           prevToken = token;
@@ -147,6 +161,16 @@ export function formatAql(text: string, options: FormatOptions): string {
         
         if (isClauseCandidate) firstClauseSeen = true;
         
+        if (token.type === TokenType.Semicolon) {
+          write(';');
+          newline();
+          indent = 0;
+          forDepth = 0;
+          firstClauseSeen = false;
+          prevToken = token;
+          continue;
+        }
+
         if (token.type === TokenType.Comma) {
           write(',');
           if (isMultilineCtx) newline();

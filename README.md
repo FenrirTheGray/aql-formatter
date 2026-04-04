@@ -14,6 +14,8 @@ Trigger with `Shift+Alt+F` (or your configured format shortcut) on any `.aql` fi
 - Breaks long arrays and objects into multiline format when they exceed the configured print width
 - Normalizes keywords to UPPERCASE
 - Preserves comments and string literals
+- Supports `//` as a scope separator to split independent statement groups
+- Preserves comment placement (inline comments stay inline, own-line comments stay on their own line)
 - Cleans up extraneous whitespace
 
 **Before:**
@@ -84,6 +86,7 @@ code --install-extension aql-formatter-0.1.0.vsix
 | Graph traversal   | `FOR v, e, p IN 1..3 OUTBOUND ... GRAPH ...`      |
 | Search            | `SEARCH`, `WINDOW`                                |
 | Named collections | `WITH users, friends`                             |
+| Scope separator   | `//` on its own line resets indentation scope      |
 
 ## Development
 
