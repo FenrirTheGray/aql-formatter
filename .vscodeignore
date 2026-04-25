@@ -1,5 +1,14 @@
 .vscode/**
+.github/**
 src/**
+out/**
+!out/extension.js
+!out/extension.js.map
 node_modules/**
-tsconfig.json
 .gitignore
+.gitattributes
+tsconfig.json
+eslint.config.mjs
+jest.config.js
+package-lock.json
+*.vsix
