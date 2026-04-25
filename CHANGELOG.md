@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2026-04-25
+
+### Fixed
+
+- README marketplace badges. shields.io retired its `visual-studio-marketplace` endpoint and now serves a literal "retired badge" image. Switched the version, install count, and rating badges to `vsmarketplacebadges.dev` which serves live data. Marketplace listing must be rebuilt for the README update to ship.
+
 ## [0.3.3] - 2026-04-25
 
 ### Internal
@@ -102,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test suite covering tokenizer, formatter, and keyword tables.
 - README with usage instructions and feature overview.
 
+[0.3.4]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.4
 [0.3.3]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.3
 [0.3.2]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.2
 [0.3.1]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.1
