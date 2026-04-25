@@ -100,4 +100,4 @@ npm run lint         # run ESLint
 
 ## License
 
-This project is licensed under the [GNU General Public License v3.0](LICENSE).
+This project is licensed under the [GNU General Public License v3.0](LICENSE). GPL-3.0 was chosen to keep derivative editor extensions open source.
