@@ -137,6 +137,18 @@ RETURN result
     expect(formatAql('RETURN (1 + 2)', options)).toBe('RETURN (1 + 2)\n');
   });
 
+  // --- Brace spacing ---
+
+  it('should pad single-property object braces with spaces', () => {
+    expect(formatAql('RETURN { a: 1 }', options)).toBe('RETURN { a: 1 }\n');
+    expect(formatAql('RETURN {a:1}', options)).toBe('RETURN { a: 1 }\n');
+  });
+
+  it('should not pad empty object braces', () => {
+    expect(formatAql('RETURN {}', options)).toBe('RETURN {}\n');
+    expect(formatAql('RETURN { }', options)).toBe('RETURN {}\n');
+  });
+
   // --- Deep nesting ---
 
   it('should handle 3+ deep nested FOR loops', () => {

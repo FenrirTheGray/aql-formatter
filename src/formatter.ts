@@ -224,18 +224,12 @@ export function formatAql(text: string, options: FormatOptions): string {
         }
         
         if (node.close) {
-          // Add space before closing brace if not multiline and has inner content
-          let addedSpace = false;
-          if (!isSubquery && !shouldMultiline && node.open.type === TokenType.OpenBrace && node.close.type === TokenType.CloseBrace && node.children.length > 0) {
-             if (!shouldSkipSpaceBefore(node.close, prevToken)) {
-               write(' ');
-               addedSpace = true;
-             }
-          }
-          if (!addedSpace && !isNewLine && !isSubquery && !shouldMultiline && !shouldSkipSpaceBefore(node.close, prevToken)) {
-             write(' ');
-          }
-          
+          const needSpace =
+            !isNewLine &&
+            !isSubquery &&
+            !shouldMultiline &&
+            !shouldSkipSpaceBefore(node.close, prevToken);
+          if (needSpace) write(' ');
           write(node.close.value);
           prevToken = node.close;
         }
