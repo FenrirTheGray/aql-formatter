@@ -478,4 +478,119 @@ FOR b IN bs
     const compact = 'RETURN { a: { b: 1 } }';
     expect(fmt(compact, options)).toBe('RETURN { a: { b: 1 } }\n');
   });
+
+  describe('OPTIONS after each modification clause', () => {
+    it('should format OPTIONS after UPDATE ... IN coll', () => {
+      const input = 'FOR doc IN src UPDATE doc WITH { x: 1 } IN coll OPTIONS { ignoreErrors: true }';
+      const expected = `FOR doc IN src
+  UPDATE doc WITH { x: 1 } IN coll
+    OPTIONS { ignoreErrors: TRUE }
+`;
+      expect(fmt(input, options)).toBe(expected);
+    });
+
+    it('should format OPTIONS after REPLACE ... IN coll', () => {
+      const input = 'FOR doc IN src REPLACE doc WITH { x: 1 } IN coll OPTIONS { ignoreErrors: true }';
+      const expected = `FOR doc IN src
+  REPLACE doc WITH { x: 1 } IN coll
+    OPTIONS { ignoreErrors: TRUE }
+`;
+      expect(fmt(input, options)).toBe(expected);
+    });
+
+    it('should format OPTIONS after REMOVE ... IN coll', () => {
+      const input = 'FOR doc IN src REMOVE doc IN coll OPTIONS { ignoreErrors: true }';
+      const expected = `FOR doc IN src
+  REMOVE doc IN coll
+    OPTIONS { ignoreErrors: TRUE }
+`;
+      expect(fmt(input, options)).toBe(expected);
+    });
+  });
+
+  describe('Long literals exceeding printWidth', () => {
+    it('should force a long array of integers onto multiple lines', () => {
+      const items = Array.from({ length: 30 }, (_, i) => i + 1);
+      const input = `RETURN [${items.join(', ')}]`;
+      const out = fmt(input, options);
+      expect(out.startsWith('RETURN [\n')).toBe(true);
+      expect(out.endsWith(']\n')).toBe(true);
+      for (const n of items) {
+        expect(out).toContain(`  ${n}`);
+      }
+      const lines = out.split('\n');
+      expect(lines.length).toBeGreaterThan(items.length);
+    });
+
+    it('should force a long object onto multiple lines', () => {
+      const input = 'RETURN { aFirstName: "long value here", anotherFieldName: "more value", thirdField: "even more" }';
+      const expected = `RETURN {
+  aFirstName: "long value here",
+  anotherFieldName: "more value",
+  thirdField: "even more"
+}
+`;
+      expect(fmt(input, options)).toBe(expected);
+    });
+  });
+
+  describe('Comment placement', () => {
+    it('should keep an inline trailing comment on the same line', () => {
+      const input = 'FOR u IN users // tail\n  RETURN u';
+      const expected = `FOR u IN users // tail
+  RETURN u
+`;
+      expect(fmt(input, options)).toBe(expected);
+    });
+
+    it('should keep an own-line leading comment on its own line', () => {
+      const input = '// header\nFOR u IN users\nRETURN u';
+      const expected = `// header
+FOR u IN users
+  RETURN u
+`;
+      expect(fmt(input, options)).toBe(expected);
+    });
+
+    it('should place a comment between two clauses on its own line at clause indent', () => {
+      const input = 'FOR u IN users\n// between\nRETURN u';
+      const expected = `FOR u IN users
+  // between
+  RETURN u
+`;
+      expect(fmt(input, options)).toBe(expected);
+    });
+
+    it('should keep a block comment that precedes a clause on its own line', () => {
+      const input = '/* header */ RETURN 1';
+      const expected = `/* header */
+RETURN 1
+`;
+      expect(fmt(input, options)).toBe(expected);
+    });
+  });
+
+  describe('// scope separator inside a parenthesized subquery', () => {
+    it('should not reset indentation; renders as a regular line comment', () => {
+      const input = 'LET x = (FOR u IN users\n//\nRETURN u) RETURN x';
+      const expected = `LET x = (
+  FOR u IN users
+    //
+    RETURN u
+)
+RETURN x
+`;
+      expect(fmt(input, options)).toBe(expected);
+    });
+  });
+
+  describe('Edge case input shapes', () => {
+    it('should format a single-token keyword input with a trailing newline', () => {
+      expect(fmt('RETURN', options)).toBe('RETURN\n');
+    });
+
+    it('should format a single-token identifier input with a trailing newline', () => {
+      expect(fmt('foo', options)).toBe('foo\n');
+    });
+  });
 });
