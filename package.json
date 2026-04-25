@@ -48,6 +48,16 @@
           ],
           "default": "upper",
           "description": "Case to enforce on AQL keywords (FOR, FILTER, TRUE, NULL, ...)."
+        },
+        "aql-formatter.trailingComma": {
+          "type": "string",
+          "enum": [
+            "none",
+            "multiline",
+            "always"
+          ],
+          "default": "none",
+          "description": "Whether to append a trailing comma after the last item in array and object literals. 'multiline' adds one only when the literal breaks across lines."
         }
       }
     },

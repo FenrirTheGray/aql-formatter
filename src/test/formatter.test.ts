@@ -413,6 +413,63 @@ FOR b IN bs
     expect(fmt(input, opts)).toBe(expected);
   });
 
+  // --- trailingComma configuration ---
+
+  it('should not add trailing comma by default', () => {
+    expect(fmt('RETURN [1, 2, 3]', options)).toBe('RETURN [1, 2, 3]\n');
+    expect(fmt('RETURN { a: 1, b: 2 }', options)).toBe('RETURN { a: 1, b: 2 }\n');
+  });
+
+  it('should add trailing comma in multiline mode only when wrapped', () => {
+    const opts: FormatOptions = { ...options, trailingComma: 'multiline' };
+    expect(fmt('RETURN [1, 2, 3]', opts)).toBe('RETURN [1, 2, 3]\n');
+    expect(fmt('RETURN { a: 1, b: 2 }', opts)).toBe('RETURN { a: 1, b: 2 }\n');
+
+    const longArr = 'RETURN ["very long string that will force formatting to wrap", "another long string"]';
+    const expected = `RETURN [
+  "very long string that will force formatting to wrap",
+  "another long string",
+]
+`;
+    expect(fmt(longArr, opts)).toBe(expected);
+
+    const longObj = 'RETURN { firstFieldName: "long value here", anotherFieldName: "more value" }';
+    const objOut = fmt(longObj, opts);
+    expect(objOut).toMatch(/,\n\}\n$/);
+  });
+
+  it('should add trailing comma in always mode', () => {
+    const opts: FormatOptions = { ...options, trailingComma: 'always' };
+    expect(fmt('RETURN [1, 2, 3]', opts)).toBe('RETURN [1, 2, 3,]\n');
+    expect(fmt('RETURN { a: 1, b: 2 }', opts)).toBe('RETURN { a: 1, b: 2, }\n');
+  });
+
+  it('should not double up an existing trailing comma', () => {
+    const opts: FormatOptions = { ...options, trailingComma: 'always' };
+    expect(fmt('RETURN [1, 2, 3,]', opts)).toBe('RETURN [1, 2, 3,]\n');
+    expect(fmt('RETURN { a: 1, b: 2, }', opts)).toBe('RETURN { a: 1, b: 2, }\n');
+  });
+
+  it('should not add trailing comma to empty groups', () => {
+    const opts: FormatOptions = { ...options, trailingComma: 'always' };
+    expect(fmt('RETURN []', opts)).toBe('RETURN []\n');
+    expect(fmt('RETURN {}', opts)).toBe('RETURN {}\n');
+  });
+
+  it('should not add trailing comma inside parenthesized subqueries', () => {
+    const opts: FormatOptions = { ...options, trailingComma: 'always' };
+    const input = 'LET x = (FOR u IN users RETURN u) RETURN x';
+    const result = fmt(input, opts);
+    expect(result).not.toMatch(/,\n\)/);
+    expect(result).not.toMatch(/u,\)/);
+  });
+
+  it('should not add trailing comma to function call argument lists', () => {
+    const opts: FormatOptions = { ...options, trailingComma: 'always' };
+    expect(fmt('RETURN LENGTH(users)', opts)).toBe('RETURN LENGTH(users)\n');
+    expect(fmt('RETURN CONCAT(a, b, c)', opts)).toBe('RETURN CONCAT(a, b, c)\n');
+  });
+
   it('should multiline a deeply nested literal that exceeds printWidth', () => {
     const input = 'RETURN { a: { b: { c: { d: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] } } } }';
     const out = fmt(input, options);

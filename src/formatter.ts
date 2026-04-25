@@ -3,12 +3,14 @@ import { CLAUSE_KEYWORDS, MODIFICATION_CLAUSE_KEYWORDS, MODIFIER_CLAUSE_KEYWORDS
 import { Node, buildCST } from './cst';
 
 export type KeywordCase = 'upper' | 'lower' | 'preserve';
+export type TrailingComma = 'none' | 'multiline' | 'always';
 
 export interface FormatOptions {
   tabSize: number;
   insertSpaces: boolean;
   printWidth?: number;
   keywordCase?: KeywordCase;
+  trailingComma?: TrailingComma;
 }
 
 /**
@@ -121,7 +123,31 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
   const indentChar = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
   const printWidth = options.printWidth || 80;
   const keywordCase: KeywordCase = options.keywordCase || 'upper';
+  const trailingComma: TrailingComma = options.trailingComma || 'none';
   const kw = (upper: string, original: string): string => applyKeywordCase(original, upper, keywordCase);
+
+  /**
+   * Walks `children` from the end, skipping line and block comments, to find
+   * the last meaningful node. Returns null when the list is empty or holds
+   * only comments. Used by the trailing-comma logic to decide whether the
+   * existing tail already terminates with a comma.
+   */
+  const lastMeaningfulChild = (children: Node[]): Node | null => {
+    for (let i = children.length - 1; i >= 0; i--) {
+      const c = children[i];
+      if (c.type === 'Token' &&
+          (c.token.type === TokenType.LineComment || c.token.type === TokenType.BlockComment)) {
+        continue;
+      }
+      return c;
+    }
+    return null;
+  };
+
+  const endsWithComma = (children: Node[]): boolean => {
+    const last = lastMeaningfulChild(children);
+    return !!last && last.type === 'Token' && last.token.type === TokenType.Comma;
+  };
   
   let result = '';
   let indent = 0;
@@ -319,9 +345,9 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
         const savedIndent = indent;
         const savedForDepth = forDepth;
         const savedFirstClause = firstClauseSeen;
-        
+
         let shouldMultiline = false;
-        
+
         if (isSubquery) {
           indent++;
           forDepth = 0;
@@ -334,9 +360,19 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
             newline();
           }
         }
-        
+
         formatNodes(node.children, shouldMultiline);
-        
+
+        const isCollectionLiteral =
+          node.groupType === 'Bracket' || node.groupType === 'Brace';
+        const wantsTrailingComma =
+          isCollectionLiteral &&
+          lastMeaningfulChild(node.children) !== null &&
+          !endsWithComma(node.children) &&
+          (trailingComma === 'always' ||
+           (trailingComma === 'multiline' && shouldMultiline));
+        if (wantsTrailingComma) write(',');
+
         if (isSubquery) {
           indent = savedIndent;
           forDepth = savedForDepth;

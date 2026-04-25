@@ -34,12 +34,14 @@ export function activate(context: vscode.ExtensionContext) {
         const config = vscode.workspace.getConfiguration('aql-formatter', document.uri);
         const printWidth = config.get<number>('printWidth', 80);
         const keywordCase = config.get<'upper' | 'lower' | 'preserve'>('keywordCase', 'upper');
+        const trailingComma = config.get<'none' | 'multiline' | 'always'>('trailingComma', 'none');
 
         const result = formatAql(text, {
           tabSize: options.tabSize,
           insertSpaces: options.insertSpaces,
           printWidth,
           keywordCase,
+          trailingComma,
         });
 
         diagnostics.set(document.uri, result.diagnostics.map(d => toVscodeDiagnostic(document, d)));
