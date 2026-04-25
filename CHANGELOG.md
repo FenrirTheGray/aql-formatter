@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.5] - 2026-04-25
+
+### Changed
+
+- New extension icon (256x256, optimised). Replaces the prior icon with a darker dark-slate-blue background and a green motif.
+- `galleryBanner.color` updated from `#1f1f1f` to `#3E4557` to match the new icon background, eliminating the seam between banner and icon on the Marketplace listing.
+
 ## [0.3.4] - 2026-04-25
 
 ### Fixed
@@ -108,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test suite covering tokenizer, formatter, and keyword tables.
 - README with usage instructions and feature overview.
 
+[0.3.5]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.5
 [0.3.4]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.4
 [0.3.3]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.3
 [0.3.2]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.2

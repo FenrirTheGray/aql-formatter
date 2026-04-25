@@ -2,7 +2,7 @@
   "name": "aql-formatter",
   "displayName": "ArangoDB Query Language Formatter (AQL)",
   "description": "Formatter and syntax highlighting for ArangoDB Query Language (AQL)",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "icon": "icon.png",
   "publisher": "acolovic",
   "license": "GPL-3.0",
@@ -23,7 +23,7 @@
   ],
   "qna": "marketplace",
   "galleryBanner": {
-    "color": "#1f1f1f",
+    "color": "#3E4557",
     "theme": "dark"
   },
   "engines": {
