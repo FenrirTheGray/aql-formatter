@@ -594,6 +594,49 @@ RETURN x
     });
   });
 
+  describe('trailingComma with a trailing in-group comment', () => {
+    /**
+     * Pins the current behaviour of `trailingComma: 'multiline'` when the
+     * last meaningful child is followed by a trailing comment inside the
+     * group. With a line comment the synthesised comma is emitted after the
+     * comment has forced a newline, so the comma lands on its own indented
+     * line. With a block comment the comma is emitted inline directly after
+     * the `*\/`. This is documented behaviour, not asserted as ideal: any
+     * future intentional change should update both this test and the
+     * idempotency fixture set together.
+     */
+    it('places the comma on its own line after a trailing line comment', () => {
+      const opts: FormatOptions = { ...options, trailingComma: 'multiline' };
+      const input = 'RETURN ["very long string that will force formatting to wrap", "another long string" // comment\n]';
+      const expected = `RETURN [
+  "very long string that will force formatting to wrap",
+  "another long string" // comment
+  ,
+]
+`;
+      expect(fmt(input, opts)).toBe(expected);
+    });
+
+    it('places the comma inline after a trailing block comment', () => {
+      const opts: FormatOptions = { ...options, trailingComma: 'multiline' };
+      const input = 'RETURN ["very long string that will force formatting to wrap", "another long string" /* tail */]';
+      const expected = `RETURN [
+  "very long string that will force formatting to wrap",
+  "another long string" /* tail */,
+]
+`;
+      expect(fmt(input, opts)).toBe(expected);
+    });
+
+    it('is idempotent across the line-comment edge case', () => {
+      const opts: FormatOptions = { ...options, trailingComma: 'multiline' };
+      const input = 'RETURN ["very long string that will force formatting to wrap", "another long string" // comment\n]';
+      const first = fmt(input, opts);
+      const second = fmt(first, opts);
+      expect(second).toBe(first);
+    });
+  });
+
   describe('idempotency', () => {
     /**
      * Representative AQL inputs exercising clauses, subqueries, traversal,
