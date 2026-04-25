@@ -64,7 +64,7 @@ FOR doc IN collection
 cd aql-formatter
 npm install
 npx @vscode/vsce package
-code --install-extension aql-formatter-0.1.0.vsix
+code --install-extension aql-formatter-*.vsix
 ```
 
 ### From Source (development)
