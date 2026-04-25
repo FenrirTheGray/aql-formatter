@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { formatAql, FormatterDiagnostic } from './formatter';
+import { computeDedentIndent } from './on-type';
 
 const toVscodeDiagnostic = (
   document: vscode.TextDocument,
@@ -61,6 +62,32 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   context.subscriptions.push(formatter);
+
+  const onType = vscode.languages.registerOnTypeFormattingEditProvider(
+    'aql',
+    {
+      provideOnTypeFormattingEdits(
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        ch: string
+      ): vscode.TextEdit[] {
+        if (ch !== '}' && ch !== ')' && ch !== ']') return [];
+        const text = document.getText();
+        const offset = document.offsetAt(position);
+        const indent = computeDedentIndent(text, offset, ch);
+        if (indent === null) return [];
+        const lineStart = document.lineAt(position.line).range.start;
+        const triggerStart = position.translate(0, -1);
+        return [vscode.TextEdit.replace(new vscode.Range(lineStart, triggerStart), indent)];
+      },
+    },
+    '}',
+    ')',
+    ']',
+    '\n'
+  );
+
+  context.subscriptions.push(onType);
 }
 
 export function deactivate() {}
