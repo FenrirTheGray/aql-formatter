@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-04-25
+
+### Added
+
+- `aql-formatter.keywordCase` setting (`upper` | `lower` | `preserve`, default `upper`). Controls the case of all AQL keywords, including the boolean and null literals (`TRUE`, `FALSE`, `NULL`). `preserve` echoes the source token's original spelling.
+- `aql-formatter.trailingComma` setting (`none` | `multiline` | `always`, default `none`). Adds a trailing comma to array and object literals. `multiline` only inserts one when the literal is broken across lines; `always` inserts one for single-line literals as well. Parenthesized subqueries and function call argument lists are not affected.
+- Builtin function highlighting. Common AQL builtins (`LENGTH`, `CONCAT`, `DATE_*`, `GEO_*`, etc.) now match the `support.function.builtin.aql` TextMate scope so themes color them distinctly from user-defined function calls. The set is sourced from `src/builtin-functions.ts`; a parity test keeps the TS export and the grammar regex aligned.
+- On-type formatting provider. Typing `}`, `)`, or `]` on an otherwise blank line snaps the line's indent to match the matching opener. No full reformat is performed.
+
 ## [0.2.1] - 2026-04-25
 
 ### Changed
@@ -75,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test suite covering tokenizer, formatter, and keyword tables.
 - README with usage instructions and feature overview.
 
+[0.3.0]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.0
 [0.2.1]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.2.1
 [0.2.0]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.2.0
 [0.1.3]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.1.3
