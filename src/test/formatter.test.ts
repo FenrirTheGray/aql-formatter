@@ -593,4 +593,54 @@ RETURN x
       expect(fmt('foo', options)).toBe('foo\n');
     });
   });
+
+  describe('idempotency', () => {
+    /**
+     * Representative AQL inputs exercising clauses, subqueries, traversal,
+     * COLLECT/AGGREGATE, modification clauses with OPTIONS, comments, bind
+     * parameters and long literals. The property under test is
+     * `format(format(q)) === format(q)` for every formatter option variant.
+     */
+    const fixtures: string[] = [
+      'FOR u IN users FILTER u.active == true RETURN u',
+      'FOR u IN users FOR f IN friends FILTER u.id == f.uid RETURN { u, f }',
+      'WITH users FOR u IN users RETURN u',
+      'LET active = (FOR u IN users FILTER u.active RETURN u) RETURN active',
+      'LET result = (FOR u IN users LET friends = (FOR f IN friends FILTER f.uid == u._id RETURN f) RETURN { u, friends }) RETURN result',
+      'FOR u IN users COLLECT city = u.city WITH COUNT INTO total RETURN { city, total }',
+      'FOR u IN users COLLECT city = u.city AGGREGATE total = SUM(u.amount) RETURN { city, total }',
+      'FOR v, e, p IN 1..3 OUTBOUND "users/1" GRAPH "social" FILTER v.active RETURN v',
+      'FOR doc IN src INSERT { value: doc.v } INTO coll OPTIONS { overwriteMode: "update" }',
+      'FOR doc IN src UPSERT { _key: doc._key } INSERT doc UPDATE doc IN target OPTIONS { ignoreErrors: true }',
+      'FOR doc IN src REMOVE doc IN coll OPTIONS { ignoreErrors: true }',
+      'FOR doc IN @@collection FILTER doc.name == @name RETURN doc',
+      'RETURN CONCAT(UPPER(doc.first), " ", LOWER(doc.last))',
+      `RETURN [${Array.from({ length: 30 }, (_, i) => i + 1).join(', ')}]`,
+      'RETURN { aFirstName: "long value here", anotherFieldName: "more value", thirdField: "even more" }',
+      'FOR u IN users // tail\n  RETURN u',
+      '// header\nFOR u IN users\nRETURN u',
+      'FOR a IN as RETURN a\n//\nFOR b IN bs RETURN b',
+      'RETURN { a: { b: { c: { d: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] } } } }',
+      'RETURN',
+    ];
+
+    const variants: { name: string; opts: FormatOptions }[] = [
+      { name: 'default', opts: options },
+      { name: 'keywordCase=lower', opts: { ...options, keywordCase: 'lower' } },
+      { name: 'trailingComma=multiline', opts: { ...options, trailingComma: 'multiline' } },
+    ];
+
+    for (const variant of variants) {
+      describe(variant.name, () => {
+        for (const query of fixtures) {
+          const label = query.length > 60 ? query.slice(0, 57) + '...' : query;
+          it(`is idempotent: ${label}`, () => {
+            const first = fmt(query, variant.opts);
+            const second = fmt(first, variant.opts);
+            expect(second).toBe(first);
+          });
+        }
+      });
+    }
+  });
 });
