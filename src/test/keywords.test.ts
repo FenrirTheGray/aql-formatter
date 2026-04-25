@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { AQL_KEYWORDS, CLAUSE_KEYWORDS } from '../keywords';
+import { BUILTIN_FUNCTIONS } from '../builtin-functions';
 
 describe('Keyword definitions', () => {
   it('CLAUSE_KEYWORDS should be a subset of AQL_KEYWORDS', () => {
@@ -65,5 +66,39 @@ describe('Keyword definitions', () => {
     for (const kw of AQL_KEYWORDS) {
       expect(allGrammarKeywords.has(kw)).toBe(true);
     }
+  });
+
+  it('BUILTIN_FUNCTIONS should match the tmLanguage builtin alternation', () => {
+    const grammarPath = path.resolve(__dirname, '../../syntaxes/aql.tmLanguage.json');
+    const grammar = JSON.parse(fs.readFileSync(grammarPath, 'utf-8'));
+
+    const functionsPatterns = grammar.repository['functions'].patterns;
+    const builtinPattern = functionsPatterns.find(
+      (p: { name?: string }) => p.name === 'support.function.builtin.aql'
+    );
+    expect(builtinPattern).toBeDefined();
+
+    const match = (builtinPattern.match as string).match(/\(([A-Z0-9_|]+)\)/);
+    if (!match) { throw new Error('Expected builtin pattern to contain alternation group'); }
+    const tmBuiltins = new Set(match[1].split('|'));
+
+    for (const fn of BUILTIN_FUNCTIONS) {
+      expect(tmBuiltins.has(fn)).toBe(true);
+    }
+    for (const fn of tmBuiltins) {
+      expect(BUILTIN_FUNCTIONS.has(fn)).toBe(true);
+    }
+  });
+
+  it('builtin pattern should appear before the generic function pattern', () => {
+    const grammarPath = path.resolve(__dirname, '../../syntaxes/aql.tmLanguage.json');
+    const grammar = JSON.parse(fs.readFileSync(grammarPath, 'utf-8'));
+
+    const functionsPatterns: { name?: string }[] = grammar.repository['functions'].patterns;
+    const builtinIdx = functionsPatterns.findIndex(p => p.name === 'support.function.builtin.aql');
+    const genericIdx = functionsPatterns.findIndex(p => p.name === 'entity.name.function.aql');
+    expect(builtinIdx).toBeGreaterThanOrEqual(0);
+    expect(genericIdx).toBeGreaterThanOrEqual(0);
+    expect(builtinIdx).toBeLessThan(genericIdx);
   });
 });
