@@ -21,6 +21,11 @@
     "syntax-highlighting",
     "query-language"
   ],
+  "qna": "marketplace",
+  "galleryBanner": {
+    "color": "#1f1f1f",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
