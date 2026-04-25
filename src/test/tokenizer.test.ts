@@ -118,6 +118,20 @@ describe('AQL Tokenizer', () => {
     expect(snapshot).toMatchSnapshot();
   });
 
+  it('should omit whitespace tokens when skipWhitespace is set', () => {
+    const input = 'FOR doc IN \n collection \nRETURN doc';
+    const withWs = tokenize(input);
+    const withoutWs = tokenize(input, { skipWhitespace: true });
+
+    expect(withWs.some(t => t.type === TokenType.Whitespace)).toBe(true);
+    expect(withoutWs.some(t => t.type === TokenType.Whitespace)).toBe(false);
+
+    const project = (t: { type: TokenType; value: string; offset: number; line: number; column: number }) =>
+      ({ type: t.type, value: t.value, offset: t.offset, line: t.line, column: t.column });
+    const filtered = withWs.filter(t => t.type !== TokenType.Whitespace);
+    expect(withoutWs.map(project)).toEqual(filtered.map(project));
+  });
+
   it('should still flag unterminated strings and block comments after refactor', () => {
     const cases: { input: string; type: TokenType }[] = [
       { input: '"abc', type: TokenType.String },

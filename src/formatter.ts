@@ -63,8 +63,8 @@ function shouldSkipSpaceBefore(current: Token, prev: Token | null): boolean {
 
 export function formatAql(text: string, options: FormatOptions): FormatResult {
   const diagnostics: FormatterDiagnostic[] = [];
-  const allTokens = tokenize(text);
-  for (const t of allTokens) {
+  const tokens = tokenize(text, { skipWhitespace: true });
+  for (const t of tokens) {
     if (t.unterminated) {
       const what = t.type === TokenType.BlockComment ? 'block comment' : 'string literal';
       diagnostics.push({
@@ -75,7 +75,6 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
       });
     }
   }
-  const tokens = allTokens.filter(t => t.type !== TokenType.Whitespace);
   if (tokens.length === 0) return { text: '', diagnostics };
 
   const cst = buildCST(tokens);

@@ -74,8 +74,18 @@ const lexerSource =
   '|(@@?[a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_][a-zA-Z0-9_]*)' +
   '|(.)';
 
-export function tokenize(input: string): Token[] {
+export interface TokenizeOptions {
+  /**
+   * When true, whitespace tokens are not emitted. Internal line/column
+   * tracking still advances over whitespace so subsequent token positions
+   * remain correct. Defaults to false to preserve legacy callers.
+   */
+  skipWhitespace?: boolean;
+}
+
+export function tokenize(input: string, options?: TokenizeOptions): Token[] {
   const tokens: Token[] = [];
+  const skipWs = options?.skipWhitespace === true;
 
   const lexerRegex = new RegExp(lexerSource, 'gy');
 
@@ -127,6 +137,8 @@ export function tokenize(input: string): Token[] {
     } else {
       column += value.length;
     }
+
+    if (skipWs && type === TokenType.Whitespace) continue;
 
     const token: Token = { type, value, offset, line: currentLine, column: currentColumn };
     if (type === TokenType.String) {
