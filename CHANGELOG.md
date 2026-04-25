@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-04-25
+
+### Internal
+
+- Marketplace metadata polish. `package.json` now declares `qna: "marketplace"` to enable the Q&A tab on the Marketplace listing and a `galleryBanner` (`#1f1f1f`, `dark` theme) so the listing header contrasts with the icon. The README gained a top-of-page badge row (Marketplace version, installs, rating, CI status, license) and a one-line GPL-3.0 rationale near the License section. New `RELEASING.md` documents the publisher account facts (`acolovic`, owned by `chola.94@live.com`), the tag/build/publish/mirror flow, and the rollback path. New `CONTRIBUTING.md` covers local setup, the JSDoc-only comment convention, the keyword and builtin-function parity rules, and commit/PR conventions. No code or behaviour change.
+
 ## [0.3.2] - 2026-04-25
 
 ### Internal
@@ -96,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test suite covering tokenizer, formatter, and keyword tables.
 - README with usage instructions and feature overview.
 
+[0.3.3]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.3
 [0.3.2]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.2
 [0.3.1]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.1
 [0.3.0]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.0
