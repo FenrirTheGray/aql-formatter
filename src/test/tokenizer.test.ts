@@ -88,10 +88,50 @@ describe('AQL Tokenizer', () => {
   it('should handle bind parameters correctly', () => {
     const input = 'FOR doc IN @@collection FILTER doc.id == @id';
     const tokens = tokenize(input).filter(t => t.type !== TokenType.Whitespace);
-    
+
     // "@id" or "@@collection" are usually treated as identifiers. Wait, the old code treated `@name` as Identifier and `@@name` as Identifier. Let's make sure our new lexer does the same.
     expect(tokens.map(t => t.value)).toEqual([
       'FOR', 'doc', 'IN', '@@collection', 'FILTER', 'doc.id', '==', '@id'
     ].flatMap(x => x === 'doc.id' ? ['doc', '.', 'id'] : x));
+  });
+
+  it('should preserve token output across the indexed-capture refactor', () => {
+    const input = [
+      'FOR doc IN @@collection',
+      '  FILTER doc.age >= 18 && doc.name != "alice\\""',
+      '  LET x = 0xFF + 1.5e-3',
+      '  LET r = 1..10',
+      '  // line',
+      '  /* block',
+      '     spans */',
+      '  RETURN { id: @id, tag: \'t\', raw: `r` }',
+    ].join('\n');
+    const tokens = tokenize(input);
+    const snapshot = tokens.map(t => ({
+      type: t.type,
+      value: t.value,
+      offset: t.offset,
+      line: t.line,
+      column: t.column,
+      ...(t.unterminated ? { unterminated: true } : {}),
+    }));
+    expect(snapshot).toMatchSnapshot();
+  });
+
+  it('should still flag unterminated strings and block comments after refactor', () => {
+    const cases: { input: string; type: TokenType }[] = [
+      { input: '"abc', type: TokenType.String },
+      { input: "'abc", type: TokenType.String },
+      { input: '`abc', type: TokenType.String },
+      { input: '"foo\\"', type: TokenType.String },
+      { input: '/* abc', type: TokenType.BlockComment },
+    ];
+    for (const c of cases) {
+      const tokens = tokenize(c.input).filter(t => t.type !== TokenType.Whitespace);
+      const flagged = tokens.find(t => t.type === c.type);
+      expect(flagged?.unterminated).toBe(true);
+    }
+    const ok = tokenize('"abc" /* d */').filter(t => t.type !== TokenType.Whitespace);
+    for (const t of ok) expect(t.unterminated).toBeUndefined();
   });
 });

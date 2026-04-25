@@ -47,69 +47,85 @@ const punctuationToType: Record<string, TokenType> = {
   '.': TokenType.Dot,
 };
 
+/**
+ * Indexed capture groups, dispatched on capture index. Order MUST match the
+ * `IDX_*` constants below.
+ *
+ * 1: whitespace
+ * 2: line comment
+ * 3: block comment
+ * 4: string
+ * 5: number
+ * 6: range (..)
+ * 7: operator
+ * 8: punctuation
+ * 9: identifier (incl. bind parameters)
+ * 10: unknown (single char fallback)
+ */
+const lexerSource =
+  '(\\s+)' +
+  '|(\\/\\/[^\\n]*)' +
+  '|(\\/\\*[\\s\\S]*?(?:\\*\\/|$))' +
+  '|("(?:[^"\\\\]|\\\\[\\s\\S])*\\\\?"?|\\\'(?:[^\'\\\\]|\\\\[\\s\\S])*\\\\?\\\'?|`(?:[^`\\\\]|\\\\[\\s\\S])*\\\\?`?)' +
+  '|((?:0[xX][0-9a-fA-F]+)|(?:\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?))' +
+  '|(\\.\\.)' +
+  '|(\\?:|==|!=|<=|>=|&&|\\|\\||=~|!~|[=<>+\\-*\\/%!~])' +
+  '|([()\\[\\]{},:;?.])' +
+  '|(@@?[a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_][a-zA-Z0-9_]*)' +
+  '|(.)';
+
 export function tokenize(input: string): Token[] {
   const tokens: Token[] = [];
-  
-  // Use a global, sticky regex for maximum efficiency in V8
-  const lexerRegex = new RegExp([
-    '(?<whitespace>\\s+)',
-    '(?<lineComment>\\/\\/[^\\n]*)',
-    '(?<blockComment>\\/\\*[\\s\\S]*?(?:\\*\\/|$))',
-    '(?<string>"(?:[^"\\\\]|\\\\[\\s\\S])*\\\\?"?|\\\'(?:[^\'\\\\]|\\\\[\\s\\S])*\\\\?\\\'?|`(?:[^`\\\\]|\\\\[\\s\\S])*\\\\?`?)',
-    '(?<number>(?:0[xX][0-9a-fA-F]+)|(?:\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?))',
-    '(?<range>\\.\\.)',
-    '(?<operator>\\?:|==|!=|<=|>=|&&|\\|\\||=~|!~|[=<>+\\-*\\/%!~])',
-    '(?<punctuation>[()\\[\\]{},:;?.])',
-    '(?<identifier>@@?[a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_][a-zA-Z0-9_]*)',
-    '(?<unknown>.)'
-  ].join('|'), 'gy');
+
+  const lexerRegex = new RegExp(lexerSource, 'gy');
 
   let match: RegExpExecArray | null;
   let line = 0;
   let column = 0;
-  
-  const updatePos = (value: string) => {
-    const lines = value.split('\n');
-    if (lines.length > 1) {
-      line += lines.length - 1;
-      column = lines[lines.length - 1].length;
-    } else {
-      column += value.length;
-    }
-  };
 
   while ((match = lexerRegex.exec(input)) !== null) {
     const value = match[0];
-    const groups = match.groups;
-    if (!groups) { continue; }
     const offset = match.index;
     const currentLine = line;
     const currentColumn = column;
     let type: TokenType;
 
-    if (groups.whitespace) {
+    if (match[1] !== undefined) {
       type = TokenType.Whitespace;
-    } else if (groups.lineComment) {
+    } else if (match[2] !== undefined) {
       type = TokenType.LineComment;
-    } else if (groups.blockComment) {
+    } else if (match[3] !== undefined) {
       type = TokenType.BlockComment;
-    } else if (groups.string) {
+    } else if (match[4] !== undefined) {
       type = TokenType.String;
-    } else if (groups.number) {
+    } else if (match[5] !== undefined) {
       type = TokenType.Number;
-    } else if (groups.range) {
+    } else if (match[6] !== undefined) {
       type = TokenType.Range;
-    } else if (groups.operator) {
+    } else if (match[7] !== undefined) {
       type = TokenType.Operator;
-    } else if (groups.punctuation) {
+    } else if (match[8] !== undefined) {
       type = punctuationToType[value];
-    } else if (groups.identifier) {
+    } else if (match[9] !== undefined) {
       const upper = value.toUpperCase();
-      type = AQL_KEYWORDS.has(upper) && !value.startsWith('@') 
-        ? TokenType.Keyword 
+      type = AQL_KEYWORDS.has(upper) && !value.startsWith('@')
+        ? TokenType.Keyword
         : TokenType.Identifier;
     } else {
       type = TokenType.Unknown;
+    }
+
+    const newlineIdx = value.indexOf('\n');
+    if (newlineIdx >= 0) {
+      let lastNewline = newlineIdx;
+      let count = 1;
+      for (let i = newlineIdx + 1; i < value.length; i++) {
+        if (value.charCodeAt(i) === 10) { count++; lastNewline = i; }
+      }
+      line += count;
+      column = value.length - lastNewline - 1;
+    } else {
+      column += value.length;
     }
 
     const token: Token = { type, value, offset, line: currentLine, column: currentColumn };
@@ -126,7 +142,6 @@ export function tokenize(input: string): Token[] {
       if (!value.endsWith('*/')) token.unterminated = true;
     }
     tokens.push(token);
-    updatePos(value);
   }
 
   return tokens;
