@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-04-25
+
+### Internal
+
+- Expanded test coverage and added a fixture-based test layout. The new `src/test/fixtures/` directory holds `*.input.aql` / `*.expected.aql` pairs picked up automatically by `src/test/fixtures.test.ts`; adding a case is two files and no test code edits. Set `UPDATE_FIXTURES=1` when running the suite to rewrite every `*.expected.aql` from the current formatter output. The tmLanguage parity tests now use a tokeniser-grade regex extractor and include negative cases that prove the assertion fails when the TS exports drift from the grammar. New idempotency suite asserts `format(format(q)) === format(q)` across representative queries and three `FormatOptions` variants (default, `keywordCase: 'lower'`, `trailingComma: 'multiline'`). No user-visible behaviour change.
+
 ## [0.3.0] - 2026-04-25
 
 ### Added
@@ -84,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test suite covering tokenizer, formatter, and keyword tables.
 - README with usage instructions and feature overview.
 
+[0.3.1]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.1
 [0.3.0]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.3.0
 [0.2.1]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.2.1
 [0.2.0]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.2.0
