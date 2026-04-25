@@ -362,4 +362,13 @@ FOR b IN bs
     expect(formatAql('RETURN `abc`', options).diagnostics).toEqual([]);
     expect(formatAql('RETURN 1 /* abc */', options).diagnostics).toEqual([]);
   });
+
+  it('should multiline a deeply nested literal that exceeds printWidth', () => {
+    const input = 'RETURN { a: { b: { c: { d: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] } } } }';
+    const out = fmt(input, options);
+    expect(out).toContain('\n');
+    expect(out.split('\n').some(line => line.length > options.printWidth + options.tabSize * 6)).toBe(false);
+    const compact = 'RETURN { a: { b: 1 } }';
+    expect(fmt(compact, options)).toBe('RETURN { a: { b: 1 } }\n');
+  });
 });

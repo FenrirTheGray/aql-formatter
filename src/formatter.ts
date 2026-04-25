@@ -150,30 +150,46 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
     }
   };
   
-  const flattenToTokens = (nodes: Node[]): Token[] => {
-    const out: Token[] = [];
-    for (const n of nodes) {
-      if (n.type === 'Token') {
-        out.push(n.token);
-      } else {
-        out.push(n.open);
-        out.push(...flattenToTokens(n.children));
-        if (n.close) out.push(n.close);
-      }
-    }
-    return out;
-  };
-
+  /**
+   * Estimates the rendered width of a CST node list as if it were emitted on
+   * a single line. Walks the tree recursively without flattening into an
+   * intermediate token array. Once the running width exceeds `printWidth` the
+   * walk short-circuits and returns `printWidth + 1`, since the only consumer
+   * compares the result against `printWidth`.
+   */
   const estimateWidth = (nodes: Node[]): number => {
-    const tokens = flattenToTokens(nodes);
+    const limit = printWidth;
     let width = 0;
     let prev: Token | null = null;
-    for (const token of tokens) {
-      if (prev && !shouldSkipSpaceBefore(token, prev)) width++;
-      width += token.value.length;
-      prev = token;
-    }
-    return width;
+    let exceeded = false;
+
+    const visit = (ns: Node[]): void => {
+      if (exceeded) return;
+      for (const n of ns) {
+        if (n.type === 'Token') {
+          if (prev && !shouldSkipSpaceBefore(n.token, prev)) width++;
+          width += n.token.value.length;
+          prev = n.token;
+          if (width > limit) { exceeded = true; return; }
+        } else {
+          if (prev && !shouldSkipSpaceBefore(n.open, prev)) width++;
+          width += n.open.value.length;
+          prev = n.open;
+          if (width > limit) { exceeded = true; return; }
+          visit(n.children);
+          if (exceeded) return;
+          if (n.close) {
+            if (prev && !shouldSkipSpaceBefore(n.close, prev)) width++;
+            width += n.close.value.length;
+            prev = n.close;
+            if (width > limit) { exceeded = true; return; }
+          }
+        }
+      }
+    };
+
+    visit(nodes);
+    return exceeded ? limit + 1 : width;
   };
   
   const formatNodes = (nodes: Node[], isMultilineCtx: boolean = false) => {
