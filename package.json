@@ -38,6 +38,16 @@
           "type": "integer",
           "default": 80,
           "description": "Maximum line width before breaking objects or arrays into multiple lines."
+        },
+        "aql-formatter.keywordCase": {
+          "type": "string",
+          "enum": [
+            "upper",
+            "lower",
+            "preserve"
+          ],
+          "default": "upper",
+          "description": "Case to enforce on AQL keywords (FOR, FILTER, TRUE, NULL, ...)."
         }
       }
     },

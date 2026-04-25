@@ -2,10 +2,25 @@ import { tokenize, Token, TokenType } from './tokenizer';
 import { CLAUSE_KEYWORDS, MODIFICATION_CLAUSE_KEYWORDS, MODIFIER_CLAUSE_KEYWORDS } from './keywords';
 import { Node, buildCST } from './cst';
 
+export type KeywordCase = 'upper' | 'lower' | 'preserve';
+
 export interface FormatOptions {
   tabSize: number;
   insertSpaces: boolean;
   printWidth?: number;
+  keywordCase?: KeywordCase;
+}
+
+/**
+ * Returns the keyword spelling to emit. `upper` and `lower` produce a fixed
+ * case; `preserve` echoes the source token's original spelling. Length is
+ * preserved across all modes since AQL keywords are pure ASCII letters, so
+ * the width estimator's `token.value.length` reads remain accurate.
+ */
+function applyKeywordCase(originalValue: string, upper: string, mode: KeywordCase): string {
+  if (mode === 'preserve') return originalValue;
+  if (mode === 'lower') return upper.toLowerCase();
+  return upper;
 }
 
 export type DiagnosticSeverity = 'error' | 'warning';
@@ -105,6 +120,8 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
   collectStrayAndUnclosed(cst);
   const indentChar = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
   const printWidth = options.printWidth || 80;
+  const keywordCase: KeywordCase = options.keywordCase || 'upper';
+  const kw = (upper: string, original: string): string => applyKeywordCase(original, upper, keywordCase);
   
   let result = '';
   let indent = 0;
@@ -235,7 +252,7 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
         if (token.type === TokenType.Keyword && MODIFIER_CLAUSE_KEYWORDS.has(upper) && upper === 'OPTIONS' && inModificationContext) {
           if (!isNewLine) newline();
           indent++;
-          write(upper);
+          write(kw(upper, token.value));
           optionsIndentRestore = indent - 1;
           prevToken = token;
           continue;
@@ -247,17 +264,17 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
           inModificationContext = MODIFICATION_CLAUSE_KEYWORDS.has(upper);
 
           if (upper === 'FOR') {
-            write(upper);
+            write(kw(upper, token.value));
             indent++;
             forDepth++;
           } else if (upper === 'RETURN') {
-            write(upper);
+            write(kw(upper, token.value));
             if (forDepth > 0) {
               indent--;
               forDepth--;
             }
           } else {
-            write(upper);
+            write(kw(upper, token.value));
           }
           prevToken = token;
           continue;
@@ -285,7 +302,7 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
         }
         
         if (!isNewLine && !shouldSkipSpaceBefore(token, prevToken)) write(' ');
-        write(token.type === TokenType.Keyword ? upper : token.value);
+        write(token.type === TokenType.Keyword ? kw(upper, token.value) : token.value);
         prevToken = token;
         
       } else { // GroupNode

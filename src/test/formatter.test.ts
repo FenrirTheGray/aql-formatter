@@ -363,6 +363,56 @@ FOR b IN bs
     expect(formatAql('RETURN 1 /* abc */', options).diagnostics).toEqual([]);
   });
 
+  // --- keywordCase configuration ---
+
+  it('should uppercase keywords by default', () => {
+    const input = 'for u in users return u';
+    expect(fmt(input, options)).toBe('FOR u IN users\n  RETURN u\n');
+  });
+
+  it('should lowercase keywords when keywordCase=lower', () => {
+    const opts: FormatOptions = { ...options, keywordCase: 'lower' };
+    const input = 'FOR u IN users RETURN u';
+    expect(fmt(input, opts)).toBe('for u in users\n  return u\n');
+  });
+
+  it('should preserve original keyword case when keywordCase=preserve', () => {
+    const opts: FormatOptions = { ...options, keywordCase: 'preserve' };
+    const input = 'For u In users Return u';
+    expect(fmt(input, opts)).toBe('For u In users\n  Return u\n');
+  });
+
+  it('should apply keywordCase to TRUE/FALSE/NULL', () => {
+    const upperOpts: FormatOptions = { ...options, keywordCase: 'upper' };
+    expect(fmt('return true', upperOpts)).toBe('RETURN TRUE\n');
+    expect(fmt('return false', upperOpts)).toBe('RETURN FALSE\n');
+    expect(fmt('return null', upperOpts)).toBe('RETURN NULL\n');
+
+    const lowerOpts: FormatOptions = { ...options, keywordCase: 'lower' };
+    expect(fmt('RETURN TRUE', lowerOpts)).toBe('return true\n');
+    expect(fmt('RETURN FALSE', lowerOpts)).toBe('return false\n');
+    expect(fmt('RETURN NULL', lowerOpts)).toBe('return null\n');
+
+    const preserveOpts: FormatOptions = { ...options, keywordCase: 'preserve' };
+    expect(fmt('RETURN True', preserveOpts)).toBe('RETURN True\n');
+  });
+
+  it('should not lowercase identifiers that look like keywords', () => {
+    const opts: FormatOptions = { ...options, keywordCase: 'lower' };
+    const input = 'FOR USERS IN list RETURN USERS';
+    expect(fmt(input, opts)).toBe('for USERS in list\n  return USERS\n');
+  });
+
+  it('should apply keywordCase to OPTIONS modifier clause', () => {
+    const opts: FormatOptions = { ...options, keywordCase: 'lower' };
+    const input = 'FOR doc IN src INSERT doc INTO coll OPTIONS { waitForSync: true }';
+    const expected = `for doc in src
+  insert doc into coll
+    options { waitForSync: true }
+`;
+    expect(fmt(input, opts)).toBe(expected);
+  });
+
   it('should multiline a deeply nested literal that exceeds printWidth', () => {
     const input = 'RETURN { a: { b: { c: { d: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] } } } }';
     const out = fmt(input, options);
