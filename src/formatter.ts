@@ -126,6 +126,14 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
    * resume at the parent indent.
    */
   let optionsIndentRestore: number | null = null;
+  /**
+   * Nesting depth of CST Group nodes during traversal. The lone-`//` scope
+   * separator only resets indentation when written at the document top
+   * level (groupDepth === 0); inside a parenthesized subquery or any
+   * brace/bracket literal it is treated as an ordinary line comment so
+   * the surrounding scope is not corrupted.
+   */
+  let groupDepth = 0;
   
   const write = (str: string) => {
     if (isNewLine && str.trim().length > 0) {
@@ -175,11 +183,13 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
         const upper = token.value.toUpperCase();
         
         if (token.type === TokenType.LineComment) {
-          if (token.value.trim() === '//') {
+          if (token.value.trim() === '//' && groupDepth === 0) {
             if (!isNewLine) newline();
             indent = 0;
             forDepth = 0;
             firstClauseSeen = false;
+            inModificationContext = false;
+            optionsIndentRestore = null;
             write('//');
             newline();
             prevToken = token;
@@ -267,8 +277,9 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
         if (!isNewLine && !shouldSkipSpaceBefore(node.open, prevToken)) write(' ');
         write(node.open.value);
         prevToken = node.open;
-        
-        const hasClauseInside = node.children.some(n => 
+        groupDepth++;
+
+        const hasClauseInside = node.children.some(n =>
           n.type === 'Token' && n.token.type === TokenType.Keyword && CLAUSE_KEYWORDS.has(n.token.value.toUpperCase())
         );
         
@@ -319,6 +330,7 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
           indent = optionsIndentRestore;
           optionsIndentRestore = null;
         }
+        groupDepth--;
       }
     }
   };

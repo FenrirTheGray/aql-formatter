@@ -263,6 +263,28 @@ FOR u IN users
     expect(fmt(input, options)).toBe('RETURN CONCAT(UPPER(doc.first), " ", LOWER(doc.last))\n');
   });
 
+  // --- // scope separator ---
+
+  it('should reset scope at top-level // separator', () => {
+    const input = 'FOR a IN as RETURN a\n//\nFOR b IN bs RETURN b';
+    const expected = `FOR a IN as
+  RETURN a
+//
+FOR b IN bs
+  RETURN b
+`;
+    expect(fmt(input, options)).toBe(expected);
+  });
+
+  it('should treat // inside a subquery as a regular line comment', () => {
+    const input = 'LET x = (FOR u IN users\n//\nRETURN u) RETURN x';
+    const result = fmt(input, options);
+    expect(result).toContain('LET x = (');
+    expect(result).toContain('RETURN x');
+    const second = fmt(result, options);
+    expect(result).toBe(second);
+  });
+
   // --- OPTIONS modifier clause ---
 
   it('should format OPTIONS after INSERT INTO on its own continuation line', () => {
