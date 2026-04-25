@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-04-25
+
+### Changed
+
+- Faster formatting on large queries. Width estimation no longer flattens nested groups into intermediate token arrays and short-circuits as soon as the running width exceeds `printWidth`. The tokenizer now uses indexed regex captures and skips emitting whitespace tokens when the formatter does not need them. On a synthetic 20 KB query, end-to-end format time is roughly halved.
+
 ## [0.2.0] - 2026-04-25
 
 ### Added
@@ -69,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test suite covering tokenizer, formatter, and keyword tables.
 - README with usage instructions and feature overview.
 
+[0.2.1]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.2.1
 [0.2.0]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.2.0
 [0.1.3]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.1.3
 [0.1.2]: https://github.com/FenrirTheGray/aql-formatter/releases/tag/v0.1.2
