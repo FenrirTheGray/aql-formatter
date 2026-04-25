@@ -1,5 +1,5 @@
 import { tokenize, Token, TokenType } from './tokenizer';
-import { CLAUSE_KEYWORDS } from './keywords';
+import { CLAUSE_KEYWORDS, MODIFICATION_CLAUSE_KEYWORDS, MODIFIER_CLAUSE_KEYWORDS } from './keywords';
 import { Node, buildCST } from './cst';
 
 export interface FormatOptions {
@@ -113,6 +113,19 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
   let firstClauseSeen = false;
   let isNewLine = true;
   let prevToken: Token | null = null;
+  /**
+   * True while the most recent clause keyword on the current statement is a
+   * data-modification clause (INSERT/UPDATE/REPLACE/REMOVE/UPSERT). Used to
+   * decide whether an OPTIONS keyword should be promoted to its own
+   * continuation-indented line.
+   */
+  let inModificationContext = false;
+  /**
+   * Set when an OPTIONS modifier clause has bumped indent for its body
+   * group. Restored after that group node completes so subsequent clauses
+   * resume at the parent indent.
+   */
+  let optionsIndentRestore: number | null = null;
   
   const write = (str: string) => {
     if (isNewLine && str.trim().length > 0) {
@@ -193,11 +206,21 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
         const isClauseCandidate = token.type === TokenType.Keyword && CLAUSE_KEYWORDS.has(upper);
         const isWithAsClause = upper === 'WITH' && !firstClauseSeen;
         const treatAsClause = isClauseCandidate && (upper !== 'WITH' || isWithAsClause);
-        
+
+        if (token.type === TokenType.Keyword && MODIFIER_CLAUSE_KEYWORDS.has(upper) && upper === 'OPTIONS' && inModificationContext) {
+          if (!isNewLine) newline();
+          indent++;
+          write(upper);
+          optionsIndentRestore = indent - 1;
+          prevToken = token;
+          continue;
+        }
+
         if (treatAsClause) {
           firstClauseSeen = true;
           if (!isNewLine) newline();
-          
+          inModificationContext = MODIFICATION_CLAUSE_KEYWORDS.has(upper);
+
           if (upper === 'FOR') {
             write(upper);
             indent++;
@@ -214,7 +237,7 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
           prevToken = token;
           continue;
         }
-        
+
         if (isClauseCandidate) firstClauseSeen = true;
         
         if (token.type === TokenType.Semicolon) {
@@ -223,6 +246,8 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
           indent = 0;
           forDepth = 0;
           firstClauseSeen = false;
+          inModificationContext = false;
+          optionsIndentRestore = null;
           prevToken = token;
           continue;
         }
@@ -288,6 +313,11 @@ export function formatAql(text: string, options: FormatOptions): FormatResult {
           if (needSpace) write(' ');
           write(node.close.value);
           prevToken = node.close;
+        }
+
+        if (optionsIndentRestore !== null) {
+          indent = optionsIndentRestore;
+          optionsIndentRestore = null;
         }
       }
     }

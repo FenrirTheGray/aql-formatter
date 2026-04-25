@@ -263,6 +263,41 @@ FOR u IN users
     expect(fmt(input, options)).toBe('RETURN CONCAT(UPPER(doc.first), " ", LOWER(doc.last))\n');
   });
 
+  // --- OPTIONS modifier clause ---
+
+  it('should format OPTIONS after INSERT INTO on its own continuation line', () => {
+    const input = 'FOR doc IN src INSERT { value: doc.v } INTO coll OPTIONS { overwriteMode: "update" }';
+    const expected = `FOR doc IN src
+  INSERT { value: doc.v } INTO coll
+    OPTIONS { overwriteMode: "update" }
+`;
+    expect(fmt(input, options)).toBe(expected);
+  });
+
+  it('should format OPTIONS on UPSERT INSERT UPDATE IN coll', () => {
+    const input = 'FOR doc IN src UPSERT { _key: doc._key } INSERT doc UPDATE doc IN target OPTIONS { ignoreErrors: true }';
+    const expected = `FOR doc IN src
+  UPSERT { _key: doc._key }
+  INSERT doc
+  UPDATE doc IN target
+    OPTIONS { ignoreErrors: TRUE }
+`;
+    expect(fmt(input, options)).toBe(expected);
+  });
+
+  it('should be idempotent for OPTIONS clause', () => {
+    const input = 'FOR doc IN src INSERT { v: 1 } INTO coll OPTIONS { overwriteMode: "update" }';
+    const firstPass = fmt(input);
+    const secondPass = fmt(firstPass);
+    expect(firstPass).toBe(secondPass);
+  });
+
+  it('should multiline OPTIONS body when it exceeds printWidth', () => {
+    const input = 'FOR doc IN src INSERT doc INTO coll OPTIONS { overwriteMode: "replace", waitForSync: true, ignoreErrors: false }';
+    const result = fmt(input);
+    expect(result).toContain('OPTIONS {\n');
+  });
+
   // --- Diagnostics ---
 
   it('should report a diagnostic for a stray closing paren', () => {

@@ -17,3 +17,15 @@ export const CLAUSE_KEYWORDS = new Set([
   'RETURN', 'INSERT', 'UPDATE', 'REPLACE', 'REMOVE', 'UPSERT',
   'WINDOW', 'SEARCH', 'WITH',
 ]);
+
+// Modification clauses whose trailing OPTIONS { ... } continuation should
+// be promoted to its own line at one extra level of indent.
+export const MODIFICATION_CLAUSE_KEYWORDS = new Set([
+  'INSERT', 'UPDATE', 'REPLACE', 'REMOVE', 'UPSERT',
+]);
+
+// Modifier clauses that follow a primary clause on a new line at a
+// continuation indent without resetting forDepth (e.g. OPTIONS).
+export const MODIFIER_CLAUSE_KEYWORDS = new Set([
+  'OPTIONS',
+]);
