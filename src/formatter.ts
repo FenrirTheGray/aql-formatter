@@ -8,6 +8,25 @@ export interface FormatOptions {
   printWidth?: number;
 }
 
+export type DiagnosticSeverity = 'error' | 'warning';
+
+/**
+ * Plain diagnostic shape produced by the formatter. The extension boundary
+ * converts these into vscode.Diagnostic instances; keeping the formatter
+ * transport-free lets unit tests run without the vscode module.
+ */
+export interface FormatterDiagnostic {
+  severity: DiagnosticSeverity;
+  message: string;
+  offset: number;
+  length: number;
+}
+
+export interface FormatResult {
+  text: string;
+  diagnostics: FormatterDiagnostic[];
+}
+
 function shouldSkipSpaceBefore(current: Token, prev: Token | null): boolean {
   if (!prev) return true;
 
@@ -42,12 +61,49 @@ function shouldSkipSpaceBefore(current: Token, prev: Token | null): boolean {
 }
 
 
-export function formatAql(text: string, options: FormatOptions): string {
+export function formatAql(text: string, options: FormatOptions): FormatResult {
+  const diagnostics: FormatterDiagnostic[] = [];
   const allTokens = tokenize(text);
+  for (const t of allTokens) {
+    if (t.unterminated) {
+      const what = t.type === TokenType.BlockComment ? 'block comment' : 'string literal';
+      diagnostics.push({
+        severity: 'warning',
+        message: `Unterminated ${what}.`,
+        offset: t.offset,
+        length: t.value.length,
+      });
+    }
+  }
   const tokens = allTokens.filter(t => t.type !== TokenType.Whitespace);
-  if (tokens.length === 0) return '';
+  if (tokens.length === 0) return { text: '', diagnostics };
 
   const cst = buildCST(tokens);
+  const collectStrayAndUnclosed = (nodes: Node[]) => {
+    for (const n of nodes) {
+      if (n.type === 'Token') {
+        if (n.stray) {
+          diagnostics.push({
+            severity: 'warning',
+            message: `Unmatched closing '${n.token.value}'.`,
+            offset: n.token.offset,
+            length: n.token.value.length,
+          });
+        }
+      } else {
+        if (n.close === null) {
+          diagnostics.push({
+            severity: 'warning',
+            message: `Unclosed '${n.open.value}'.`,
+            offset: n.open.offset,
+            length: n.open.value.length,
+          });
+        }
+        collectStrayAndUnclosed(n.children);
+      }
+    }
+  };
+  collectStrayAndUnclosed(cst);
   const indentChar = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
   const printWidth = options.printWidth || 80;
   
@@ -238,7 +294,7 @@ export function formatAql(text: string, options: FormatOptions): string {
   };
   
   formatNodes(cst);
-  
+
   if (!result.endsWith('\n')) result += '\n';
-  return result;
+  return { text: result, diagnostics };
 }

@@ -5,6 +5,8 @@ export type Node = TokenNode | GroupNode;
 export interface TokenNode {
   type: 'Token';
   token: Token;
+  /** True when the token is a stray closer with no matching opener. */
+  stray?: boolean;
 }
 
 export interface GroupNode {
@@ -39,7 +41,7 @@ export function buildCST(tokens: Token[]): Node[] {
           root.push(groupNode);
         }
       } else {
-        const node: TokenNode = { type: 'Token', token };
+        const node: TokenNode = { type: 'Token', token, stray: true };
         if (stack.length > 0) stack[stack.length - 1].children.push(node);
         else root.push(node);
       }

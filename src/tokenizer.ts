@@ -30,6 +30,7 @@ export interface Token {
   offset: number;
   line: number;
   column: number;
+  unterminated?: boolean;
 }
 
 const punctuationToType: Record<string, TokenType> = {
@@ -111,7 +112,20 @@ export function tokenize(input: string): Token[] {
       type = TokenType.Unknown;
     }
 
-    tokens.push({ type, value, offset, line: currentLine, column: currentColumn });
+    const token: Token = { type, value, offset, line: currentLine, column: currentColumn };
+    if (type === TokenType.String) {
+      const quote = value[0];
+      if (value.length < 2 || value[value.length - 1] !== quote) {
+        token.unterminated = true;
+      } else if (value.length >= 2 && value[value.length - 2] === '\\') {
+        let backslashes = 0;
+        for (let i = value.length - 2; i >= 1 && value[i] === '\\'; i--) backslashes++;
+        if (backslashes % 2 === 1) token.unterminated = true;
+      }
+    } else if (type === TokenType.BlockComment) {
+      if (!value.endsWith('*/')) token.unterminated = true;
+    }
+    tokens.push(token);
     updatePos(value);
   }
 

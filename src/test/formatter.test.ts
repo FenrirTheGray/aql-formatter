@@ -1,7 +1,8 @@
-import { formatAql } from '../formatter';
+import { formatAql, FormatOptions } from '../formatter';
 
 describe('AQL Formatter', () => {
   const options = { tabSize: 2, insertSpaces: true, printWidth: 60 };
+  const fmt = (s: string, o: FormatOptions = options) => formatAql(s, o).text;
 
   it('should format simple queries', () => {
     const input = 'FOR u IN users FILTER u.active == true RETURN u';
@@ -9,7 +10,7 @@ describe('AQL Formatter', () => {
   FILTER u.active == TRUE
   RETURN u
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   it('should indent nested loops', () => {
@@ -19,7 +20,7 @@ describe('AQL Formatter', () => {
     FILTER u.id == f.uid
     RETURN { u, f }
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   it('should preserve comments', () => {
@@ -27,12 +28,12 @@ describe('AQL Formatter', () => {
     const expected = `FOR u IN users // comment
   RETURN u
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   it('should handle multiline arrays based on printWidth', () => {
     const shortInput = 'RETURN [1, 2, 3]';
-    expect(formatAql(shortInput, options)).toBe(`RETURN [1, 2, 3]\n`);
+    expect(fmt(shortInput, options)).toBe(`RETURN [1, 2, 3]\n`);
 
     const longInput = 'RETURN ["very long string that will force formatting to wrap", "another long string"]';
     const expected = `RETURN [
@@ -40,13 +41,13 @@ describe('AQL Formatter', () => {
   "another long string"
 ]
 `;
-    expect(formatAql(longInput, options)).toBe(expected);
+    expect(fmt(longInput, options)).toBe(expected);
   });
 
   it('should be idempotent', () => {
     const input = 'FOR u IN users FILTER u.age > 18 RETURN u';
-    const firstPass = formatAql(input, options);
-    const secondPass = formatAql(firstPass, options);
+    const firstPass = fmt(input, options);
+    const secondPass = fmt(firstPass, options);
     expect(firstPass).toBe(secondPass);
   });
 
@@ -61,7 +62,7 @@ describe('AQL Formatter', () => {
 )
 RETURN active
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   it('should format nested subqueries', () => {
@@ -77,13 +78,13 @@ RETURN active
 )
 RETURN result
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   it('should isolate subquery indentation from outer scope', () => {
     const input = 'FOR doc IN collection FILTER doc.type == "a" LET sub = (FOR s IN other RETURN s) RETURN { doc, sub }';
-    const firstPass = formatAql(input, options);
-    const secondPass = formatAql(firstPass, options);
+    const firstPass = fmt(input, options);
+    const secondPass = fmt(firstPass, options);
     expect(firstPass).toBe(secondPass);
   });
 
@@ -95,7 +96,7 @@ RETURN result
   COLLECT city = u.city WITH COUNT INTO count
   RETURN { city, count }
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   it('should format COLLECT with AGGREGATE', () => {
@@ -104,7 +105,7 @@ RETURN result
   COLLECT city = u.city AGGREGATE total = SUM(u.amount)
   RETURN { city, total }
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   // --- Graph traversal ---
@@ -114,7 +115,7 @@ RETURN result
     const expected = `FOR v, e, p IN 1..3 OUTBOUND "users/1" GRAPH "social"
   RETURN v
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   // --- UPSERT ---
@@ -126,27 +127,27 @@ RETURN result
   INSERT doc
   UPDATE doc IN target
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   // --- Empty groups ---
 
   it('should handle empty groups', () => {
-    expect(formatAql('RETURN {}', options)).toBe('RETURN {}\n');
-    expect(formatAql('RETURN []', options)).toBe('RETURN []\n');
-    expect(formatAql('RETURN (1 + 2)', options)).toBe('RETURN (1 + 2)\n');
+    expect(fmt('RETURN {}', options)).toBe('RETURN {}\n');
+    expect(fmt('RETURN []', options)).toBe('RETURN []\n');
+    expect(fmt('RETURN (1 + 2)', options)).toBe('RETURN (1 + 2)\n');
   });
 
   // --- Brace spacing ---
 
   it('should pad single-property object braces with spaces', () => {
-    expect(formatAql('RETURN { a: 1 }', options)).toBe('RETURN { a: 1 }\n');
-    expect(formatAql('RETURN {a:1}', options)).toBe('RETURN { a: 1 }\n');
+    expect(fmt('RETURN { a: 1 }', options)).toBe('RETURN { a: 1 }\n');
+    expect(fmt('RETURN {a:1}', options)).toBe('RETURN { a: 1 }\n');
   });
 
   it('should not pad empty object braces', () => {
-    expect(formatAql('RETURN {}', options)).toBe('RETURN {}\n');
-    expect(formatAql('RETURN { }', options)).toBe('RETURN {}\n');
+    expect(fmt('RETURN {}', options)).toBe('RETURN {}\n');
+    expect(fmt('RETURN { }', options)).toBe('RETURN {}\n');
   });
 
   // --- Deep nesting ---
@@ -159,7 +160,7 @@ RETURN result
       FILTER c.x == 1
       RETURN { a, b, c }
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   it('should properly dedent after multiple RETURN statements', () => {
@@ -169,30 +170,30 @@ RETURN result
     RETURN b
   RETURN a
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   // --- Edge cases ---
 
   it('should handle empty input', () => {
-    expect(formatAql('', options)).toBe('');
+    expect(fmt('', options)).toBe('');
   });
 
   it('should handle whitespace-only input', () => {
-    expect(formatAql('   \n\t  \n  ', options)).toBe('');
+    expect(fmt('   \n\t  \n  ', options)).toBe('');
   });
 
   it('should handle comment-only input', () => {
-    expect(formatAql('// just a comment', options)).toBe('// just a comment\n');
+    expect(fmt('// just a comment', options)).toBe('// just a comment\n');
   });
 
   it('should handle block comment input', () => {
-    expect(formatAql('/* block comment */ RETURN 1', options)).toBe('/* block comment */\nRETURN 1\n');
+    expect(fmt('/* block comment */ RETURN 1', options)).toBe('/* block comment */\nRETURN 1\n');
   });
 
   it('should handle unmatched brackets gracefully', () => {
     const input = 'FOR u IN users RETURN [1, 2';
-    const result = formatAql(input, options);
+    const result = fmt(input, options);
     expect(result).toContain('FOR');
     expect(result).toContain('[');
     // Should not throw
@@ -200,7 +201,7 @@ RETURN result
 
   it('should handle trailing commas', () => {
     const input = 'RETURN { a: 1, b: 2, }';
-    const result = formatAql(input, options);
+    const result = fmt(input, options);
     expect(result).toContain('a:');
     expect(result).toContain('b:');
   });
@@ -213,29 +214,29 @@ RETURN result
 FOR u IN users
   RETURN u
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   // --- Idempotency for complex cases ---
 
   it('should be idempotent for subqueries', () => {
     const input = 'LET x = (FOR doc IN c FILTER doc.a == 1 RETURN doc) FOR y IN x RETURN y';
-    const firstPass = formatAql(input, options);
-    const secondPass = formatAql(firstPass, options);
+    const firstPass = fmt(input, options);
+    const secondPass = fmt(firstPass, options);
     expect(firstPass).toBe(secondPass);
   });
 
   it('should be idempotent for nested FOR loops', () => {
     const input = 'FOR a IN as FOR b IN bs FOR c IN cs RETURN { a, b, c }';
-    const firstPass = formatAql(input, options);
-    const secondPass = formatAql(firstPass, options);
+    const firstPass = fmt(input, options);
+    const secondPass = fmt(firstPass, options);
     expect(firstPass).toBe(secondPass);
   });
 
   it('should be idempotent for graph traversal', () => {
     const input = 'FOR v, e, p IN 1..3 OUTBOUND "start" GRAPH "g" FILTER v.active RETURN v';
-    const firstPass = formatAql(input, options);
-    const secondPass = formatAql(firstPass, options);
+    const firstPass = fmt(input, options);
+    const secondPass = fmt(firstPass, options);
     expect(firstPass).toBe(secondPass);
   });
 
@@ -247,18 +248,61 @@ FOR u IN users
   FILTER doc.name == @name
   RETURN doc
 `;
-    expect(formatAql(input, options)).toBe(expected);
+    expect(fmt(input, options)).toBe(expected);
   });
 
   // --- Function calls ---
 
   it('should not add space before function call parens', () => {
     const input = 'RETURN LENGTH(users)';
-    expect(formatAql(input, options)).toBe('RETURN LENGTH(users)\n');
+    expect(fmt(input, options)).toBe('RETURN LENGTH(users)\n');
   });
 
   it('should format nested function calls', () => {
     const input = 'RETURN CONCAT(UPPER(doc.first), " ", LOWER(doc.last))';
-    expect(formatAql(input, options)).toBe('RETURN CONCAT(UPPER(doc.first), " ", LOWER(doc.last))\n');
+    expect(fmt(input, options)).toBe('RETURN CONCAT(UPPER(doc.first), " ", LOWER(doc.last))\n');
+  });
+
+  // --- Diagnostics ---
+
+  it('should report a diagnostic for a stray closing paren', () => {
+    const result = formatAql('RETURN x)', options);
+    expect(result.text).toContain('RETURN');
+    expect(result.diagnostics.length).toBeGreaterThan(0);
+    const d = result.diagnostics[0];
+    expect(d.severity).toBe('warning');
+    expect(d.message).toMatch(/Unmatched closing/);
+  });
+
+  it('should report a diagnostic for an unclosed bracket', () => {
+    const result = formatAql('RETURN [1, 2', options);
+    expect(result.diagnostics.some(d => /Unclosed/.test(d.message))).toBe(true);
+  });
+
+  it('should report a diagnostic for an unterminated double-quoted string', () => {
+    const result = formatAql('RETURN "abc', options);
+    expect(result.diagnostics.some(d => /Unterminated string/.test(d.message))).toBe(true);
+  });
+
+  it('should report a diagnostic for an unterminated single-quoted string', () => {
+    const result = formatAql("RETURN 'abc", options);
+    expect(result.diagnostics.some(d => /Unterminated string/.test(d.message))).toBe(true);
+  });
+
+  it('should report a diagnostic for an unterminated backtick string', () => {
+    const result = formatAql('RETURN `abc', options);
+    expect(result.diagnostics.some(d => /Unterminated string/.test(d.message))).toBe(true);
+  });
+
+  it('should report a diagnostic for an unterminated block comment', () => {
+    const result = formatAql('RETURN 1 /* abc', options);
+    expect(result.diagnostics.some(d => /Unterminated block comment/.test(d.message))).toBe(true);
+  });
+
+  it('should not flag well-terminated strings or block comments', () => {
+    expect(formatAql('RETURN "abc"', options).diagnostics).toEqual([]);
+    expect(formatAql("RETURN 'abc'", options).diagnostics).toEqual([]);
+    expect(formatAql('RETURN `abc`', options).diagnostics).toEqual([]);
+    expect(formatAql('RETURN 1 /* abc */', options).diagnostics).toEqual([]);
   });
 });
