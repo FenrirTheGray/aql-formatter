@@ -1,0 +1,1 @@
+FOR doc IN source UPSERT { _key: doc._key } INSERT doc UPDATE doc IN target

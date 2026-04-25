@@ -1,0 +1,6 @@
+LET active = (
+  FOR u IN users
+    FILTER u.active
+    RETURN u
+)
+RETURN active

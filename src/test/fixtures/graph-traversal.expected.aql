@@ -1,0 +1,2 @@
+FOR v, e, p IN 1..3 OUTBOUND "users/1" GRAPH "social"
+  RETURN v

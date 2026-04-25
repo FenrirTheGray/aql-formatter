@@ -1,0 +1,1 @@
+FOR u IN users FILTER u.active == true RETURN u

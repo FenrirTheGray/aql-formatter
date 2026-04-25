@@ -1,0 +1,4 @@
+FOR u IN users
+  FOR f IN friends
+    FILTER u.id == f.uid
+    RETURN { u, f }
