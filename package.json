@@ -10,6 +10,17 @@
     "type": "git",
     "url": "https://github.com/FenrirTheGray/aql-formatter"
   },
+  "bugs": {
+    "url": "https://github.com/FenrirTheGray/aql-formatter/issues"
+  },
+  "homepage": "https://github.com/FenrirTheGray/aql-formatter#readme",
+  "keywords": [
+    "aql",
+    "arangodb",
+    "formatter",
+    "syntax-highlighting",
+    "query-language"
+  ],
   "engines": {
     "vscode": "^1.80.0"
   },
