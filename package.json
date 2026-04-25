@@ -83,7 +83,8 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "vscode:prepublish": "npm run lint && npm test && npm run esbuild-base -- --minify",
+    "prepublishOnly": "npm run lint && npm test && npm run compile",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --target=node16 --sourcemap=external",
     "compile": "tsc -p ./",
     "watch": "npm run esbuild-base -- --sourcemap --watch",
